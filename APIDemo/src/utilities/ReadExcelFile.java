@@ -1,4 +1,15 @@
 package utilities;
+import static io.restassured.RestAssured.given;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -8,15 +19,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import io.restassured.RestAssured;
 import io.restassured.filter.session.SessionFilter;
-
-import static io.restassured.RestAssured.given;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 /**
  * Created by arjun 
  */
@@ -24,14 +26,16 @@ import java.util.List;
 public class ReadExcelFile {
 	
 	private static final String FILE_PATH = "C:\\Users\\home\\Downloads\\Projects\\APIDemo\\Book2.xlsx";
-	public static void main(String args[]) {
+	
+	public static void main(String args[]) throws FileNotFoundException {
 		
 		List studentList = getAPIDetails();
 
 		System.out.println(studentList);
 	}
 
-	private static List getAPIDetails() {
+	private static List getAPIDetails() throws FileNotFoundException {
+		FileInputStream file=new FileInputStream(new File("C:\\Users\\home\\git\\EclipseProjects\\APIDemo\\Files\\testdata.json"));
 		List apiList = new ArrayList();
 		FileInputStream fis = null;
 		try {
@@ -84,10 +88,7 @@ public class ReadExcelFile {
 					
 					RestAssured.baseURI=data.getBaseURI();
 					SessionFilter sf=new SessionFilter();
-					String response=given().log().all().header("Content-Type","application/json").body("{\r\n" + 
-							"        \"username\": \"ArnikaArnik\",\r\n" + 
-							"        \"password\": \"ArnikaArnik\"\r\n" + 
-							"    }").filter(sf)
+					String response=given().log().all().header("Content-Type","application/json").body(IOUtils.toString(file,"UTF-8")).filter(sf)
 					.when().post("/rest/auth/1/session")
 					
 					.then().log().all().assertThat().statusCode(200).extract().response().asString();
@@ -102,16 +103,18 @@ public class ReadExcelFile {
 					
 					//update comment
 					if(data.getRequestMethod().equalsIgnoreCase("post")) {
-					given().pathParam("key", "10300").log().all().header("Content-Type","application/json").body("{\r\n" + 
-							"    \"body\": \"updating comment for my reference 07-01-2020.\",\r\n" + 
-							"    \"visibility\": {\r\n" + 
-							"        \"type\": \"role\",\r\n" + 
-							"        \"value\": \"Administrators\"\r\n" + 
-							"    }\r\n" + 
-							"}").filter(sf)
+					given().pathParam("key", "10300").log().all().header("Content-Type","application/json").body(PayLoad.body()).filter(sf)
 					.when().post(data.getResource())
 					.then().log().all().assertThat().statusCode(201).extract().response().asString();
 					}
+					
+					if(data.getRequestMethod().equalsIgnoreCase("get")) {
+						String issueDetails= given().log().all().filter(sf).pathParam("key", "10300").queryParam("fields", "comment")
+								.when().get(data.getResource())
+								.then().log().all().assertThat().statusCode(200).extract().response().asString();
+								
+								System.out.println(issueDetails);
+						}
 					
 				}
 			}
