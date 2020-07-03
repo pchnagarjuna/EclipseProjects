@@ -15,7 +15,8 @@ public class GetIssueDetails {
 		
 		RestAssured.baseURI="http://localhost:8080";
 		SessionFilter sf=new SessionFilter();
-		given().log().all().header("Content-Type","application/json").body("{\r\n" + 
+		//to handle https websites we need to give relaxHttpsvalidation() method after given method.
+		given().relaxedHTTPSValidation().log().all().header("Content-Type","application/json").body("{\r\n" + 
 				"        \"username\": \"ArnikaArnik\",\r\n" + 
 				"        \"password\": \"ArnikaArnik\"\r\n" + 
 				"    }").filter(sf)
